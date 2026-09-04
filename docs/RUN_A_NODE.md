@@ -1,74 +1,128 @@
-# Run a node — join the restored PTS network
+# Run a PTS Production node
 
-This lets you sync a full copy of the restored PTS chain and verify it
-yourself. **No delegate keys required** — this is a read-only participant
-node. You'll be independently downloading and validating every block,
-not trusting our word for it.
+This guide lets you run an independent read-only node on the PTS Production network.
 
-## What this does
+PTS Production is an independent open-source continuation of the ProtoShares/PTS blockchain technology. It is not presented as the historical public PTS mainnet.
 
-- Builds the same historical `pts_client` binary used by the network
-  from the source in this repo
-- Syncs the full chain from genesis by connecting to the public seed
-- Lets you run any read query yourself against **your own copy** of the
-  chain, not ours
+No delegate keys, wallet keys, or public RPC access are required.
 
 ## Requirements
 
 - Docker
-- ~2GB disk space
-- A few minutes for initial sync
+- x86-64 Linux host
+- approximately 2 GB of free disk space
+- outbound TCP access to port 39012
 
-## Quick start
+## Published Docker image
 
-```bash
-git clone https://github.com/artablok/pts-production.git
-cd pts-production
+Image:
 
-# verify the genesis file before trusting it
-sha256sum -c genesis/production-genesis-v1.json.sha256
+    ghcr.io/artablok/pts-production-node:v1
 
-docker build -t pts-node-join -f docker/Dockerfile .
+Published image digest:
 
-docker run -d \
-  --name pts-my-node \
-  --restart unless-stopped \
-  -v pts-my-node-data:/pts-data \
-  -v "$(pwd)/genesis:/pts-genesis:ro" \
-  -p 127.0.0.1:19990:19990 \
-  pts-node-join \
-  /pts-build/programs/client/pts_client \
-    --data-dir /pts-data \
-    --genesis-config /pts-genesis/production-genesis-v1.json \
-    --disable-default-peers \
-    --connect-to 188.137.177.230:39012 \
-    --accept-incoming-connections=0 \
-    --server \
-    --rpcuser localuser \
-    --rpcpassword "$(openssl rand -hex 16)" \
-    --rpcport 19990
-```
+    sha256:477c1bf91b3166f0a00cb076be0fe9bcdbbb868131e5e3fce949cccc67c6e05b
 
-## Verify you're actually syncing independently
+Pull it:
 
-```bash
-docker logs -f pts-my-node
-```
+    docker pull ghcr.io/artablok/pts-production-node:v1
 
-You should see `Successfully pushed block N` messages advancing. Once
-synced, compare your own head block to the public explorer
-(explorer.ptscrypto.com) **using your own node**, not by trusting us:
+The image is publicly accessible without GitHub authentication.
 
-```bash
-docker exec pts-my-node curl -s -u localuser:YOUR_PASSWORD \
-  -d '{"method":"blockchain_get_block_count","params":[],"id":1}' \
-  http://127.0.0.1:19990/rpc
-```
+## Production genesis
 
-## Why run a node
+Genesis:
 
-- Independent verification that the genesis and chain state match what's
-  claimed — no need to trust the explorer or us
-- More independent nodes means less centralization risk for the network
-- If you want to help produce blocks, see
-  [`BECOME_A_DELEGATE.md`](./BECOME_A_DELEGATE.md)
+    genesis/production-genesis-v1.json
+
+SHA-256:
+
+    b2c7f3551e0ab1668f2b042f3a65a5df13e8a3243e5ab64cb6a7d909372ba679
+
+PTS Production chain ID:
+
+    3a658e5846c3258dfbcfd4df712aa31cff81b25b2800e213fbe64c05c134ec60
+
+The Docker image contains the Production genesis at:
+
+    /opt/pts/genesis/production-genesis-v1.json
+
+## Public P2P seed
+
+    188.137.177.230:39012
+
+## Start a read-only node
+
+Create persistent storage:
+
+    docker volume create pts-my-node-data
+
+Start the node:
+
+    docker run -d \
+      --name pts-my-node \
+      --restart unless-stopped \
+      --network bridge \
+      -v pts-my-node-data:/var/lib/pts \
+      --entrypoint /bin/bash \
+      ghcr.io/artablok/pts-production-node:v1 \
+      -lc 'tail -f /dev/null | /usr/local/bin/pts_client \
+        --data-dir /var/lib/pts \
+        --genesis-config /opt/pts/genesis/production-genesis-v1.json \
+        --disable-default-peers \
+        --connect-to 188.137.177.230:39012 \
+        --accept-incoming-connections=0 \
+        --upnp=0 \
+        --min-delegate-connection-count=0'
+
+This configuration does not expose RPC, does not contain private keys,
+and does not accept incoming P2P connections.
+
+## Watch synchronization
+
+    docker logs -f pts-my-node
+
+During initial synchronization you should see messages including:
+
+    Attempting to connect to peer 188.137.177.230:39012
+    --- there are now 1 active connections to the p2p network
+    --- syncing with p2p network, N blocks left to fetch
+    --- in sync with p2p network
+
+This clean-node synchronization procedure was tested end-to-end against
+the public PTS Production seed using an empty data directory.
+
+## Stop and start
+
+Stop:
+
+    docker stop pts-my-node
+
+Start again:
+
+    docker start pts-my-node
+
+Blockchain data remains in the Docker volume `pts-my-node-data`.
+
+## Remove
+
+Remove the container:
+
+    docker rm -f pts-my-node
+
+Delete its blockchain data if no longer needed:
+
+    docker volume rm pts-my-node-data
+
+## Security
+
+Do not put delegate private keys, wallet private keys, or historical
+claim keys on a read-only community node.
+
+RPC is intentionally disabled in this configuration. If RPC is enabled
+later, bind it to localhost and protect it with strong unique credentials.
+
+See also:
+
+- [Network endpoints](./NETWORK_ENDPOINTS.md)
+- [Become a delegate](./BECOME_A_DELEGATE.md)
