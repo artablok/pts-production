@@ -1,0 +1,10 @@
+# never commit these
+*.env
+*.env.*
+config/*.env
+*wallet*.json
+!docs/*
+.wallets/
+*.log
+__pycache__/
+*.pyc
