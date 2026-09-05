@@ -245,6 +245,11 @@ optional<digest_block> detail::client_impl::blockchain_get_block( const string& 
    return optional<digest_block>();
 }
 
+vector<asset> detail::client_impl::blockchain_get_balance_for_key( const address& owner_address )const
+{
+   return _chain_db->get_balance_for_key( owner_address );
+}
+
 map<balance_id_type, balance_record> detail::client_impl::blockchain_list_balances( const string& first, uint32_t limit )const
 {
    return _chain_db->get_balances( first, limit );

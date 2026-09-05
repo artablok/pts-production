@@ -240,6 +240,20 @@
         "aliases" : ["get_balance"]
       },
       {
+        "method_name": "blockchain_get_balance_for_key",
+        "description": "Returns balances owned by the given address, grouped by asset",
+        "return_type": "asset_array",
+        "parameters" : [
+            {
+              "name" : "owner_address",
+              "type" : "address",
+              "description" : "address of the balance owner"
+            }
+        ],
+        "is_const" : true,
+        "prerequisites" : ["no_prerequisites"]
+      },
+      {
         "method_name": "blockchain_list_balances",
         "description": "Lists balance records starting at the given balance ID",
         "return_type": "balance_record_map",
