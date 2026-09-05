@@ -14,6 +14,9 @@ tracked here, not just promised.
 - [x] Public P2P seed node reachable externally
 - [x] Read-only node-joining guide published ([`RUN_A_NODE.md`](./RUN_A_NODE.md))
 - [x] Delegate recruitment process published ([`BECOME_A_DELEGATE.md`](./BECOME_A_DELEGATE.md))
+- [x] Added `blockchain_get_balance_for_key` RPC method — look up balances
+      by owner address directly, without needing the balance_id (see
+      [PR #3](https://github.com/artablok/pts-production/pull/3))
 
 ## In progress
 

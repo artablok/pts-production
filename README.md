@@ -54,6 +54,14 @@ a delegate.
 | `docs/BECOME_A_DELEGATE.md` | Process for taking over one of the 101 delegate keys |
 | `docs/ROADMAP.md` | Path to decentralization |
 
+## RPC methods added beyond the historical client
+
+- `blockchain_get_balance_for_key` — returns balances owned by a given
+  address, grouped by asset. Complements the original
+  `blockchain_get_balance` (lookup by balance_id) and
+  `blockchain_list_balances`. Added in
+  [PR #3](https://github.com/artablok/pts-production/pull/3).
+
 ## License
 
 MIT (matching the original BitShares/PTS toolkit license)
