@@ -13,21 +13,23 @@ No delegate keys, wallet keys, or public RPC access are required.
 - approximately 2 GB of free disk space
 - outbound TCP access to port 39012
 
-## Published Docker image
+## Published Docker images
 
-Image:
+| Tag | Digest | Notes |
+|---|---|---|
+| `v1` | `sha256:477c1bf91b3166f0a00cb076be0fe9bcdbbb868131e5e3fce949cccc67c6e05b` | Original release. Immutable — this digest will never change. |
+| `v1.1.0` | `sha256:160c66f5d67e73af5f59c1aa6c6760c45d8aefd53e053ad27d3ddb0a2ab94aa4` | Adds `blockchain_get_balance_for_key` RPC method (see [PR #3](https://github.com/artablok/pts-production/pull/3)). Same genesis, additive change only. |
 
-    ghcr.io/artablok/pts-production-node:v1
+Both tags are immutable and will keep working — pick whichever fits.
+New setups should generally use the latest tag (`v1.1.0`) for the
+extra RPC method, but `v1` remains fully supported.
 
-Published image digest:
+Pull either:
 
-    sha256:477c1bf91b3166f0a00cb076be0fe9bcdbbb868131e5e3fce949cccc67c6e05b
-
-Pull it:
-
+    docker pull ghcr.io/artablok/pts-production-node:v1.1.0
     docker pull ghcr.io/artablok/pts-production-node:v1
 
-The image is publicly accessible without GitHub authentication.
+Both are publicly accessible without GitHub authentication.
 
 ## Production genesis
 
