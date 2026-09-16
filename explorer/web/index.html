@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PTS Production Explorer</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #0b1020;
+      color: #e8edf7;
+    }
+    header {
+      padding: 24px;
+      border-bottom: 1px solid #27314a;
+    }
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .grid .card {
+      min-width: 0;
+    }
+
+    .grid .value {
+      overflow-wrap: anywhere;
+    }
+
+    #supply {
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    @media (max-width: 1000px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: #151c30;
+      border: 1px solid #27314a;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .label {
+      color: #8d9ab7;
+      font-size: 13px;
+    }
+    .value {
+      font-size: 28px;
+      margin-top: 6px;
+      font-weight: 700;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #151c30;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #27314a;
+      font-size: 14px;
+    }
+    th {
+      color: #8d9ab7;
+    }
+    input, button {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #33405d;
+      background: #11182a;
+      color: #fff;
+    }
+    button {
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #11182a;
+      padding: 16px;
+      border-radius: 10px;
+    }
+    .ok { color: #86efac; }
+
+    .tx-card {
+      background: #151c30;
+      border: 1px solid #27314a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .tx-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .tx-field {
+      background: #11182a;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .tx-field .label {
+      color: #8d9ab7;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .tx-field .data {
+      word-break: break-all;
+      font-size: 14px;
+    }
+
+    .confirmed {
+      color: #86efac;
+      font-weight: 700;
+    }
+
+    details {
+      margin-top: 18px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: #8d9ab7;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>PTS Production Explorer</h1>
+  <div id="statusLine">Connecting...</div>
+</header>
+
+<main>
+  <div class="grid">
+    <div class="card">
+      <div class="label">Head Block</div>
+      <div class="value" id="head">-</div>
+    </div>
+    <div class="card">
+      <div class="label">Participation</div>
+      <div class="value" id="participation">-</div>
+    </div>
+    <div class="card">
+      <div class="label">Peers</div>
+      <div class="value" id="peers">-</div>
+    </div>
+    <div class="card">
+      <div class="label">Supply</div>
+      <div class="value" id="supply">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Block Time</div>
+      <div class="value" id="blockTime">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Delegates</div>
+      <div class="value" id="delegates">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Client</div>
+      <div class="value" id="version">-</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:24px">
+    <div class="label">PTS Production Chain ID</div>
+    <div
+      id="chainId"
+      style="margin-top:8px;word-break:break-all;font-family:monospace"
+    >-</div>
+  </div>
+
+  <h2>Latest Blocks</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Height</th>
+        <th>Timestamp</th>
+        <th>Delegate</th>
+        <th>Transactions</th>
+        <th>Hash</th>
+      </tr>
+    </thead>
+    <tbody id="blocks"></tbody>
+  </table>
+
+  <h2>Recent Transactions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Block</th>
+        <th>TX ID</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Amount</th>
+        <th>Memo</th>
+      </tr>
+    </thead>
+    <tbody id="transactions"></tbody>
+  </table>
+
+  <h2>Block Lookup</h2>
+  <p>
+    <input id="blockHeight" type="number" placeholder="Block height">
+    <button onclick="lookupBlock()">Lookup</button>
+  </p>
+  <div id="blockResult" class="tx-card">
+    Enter a block height or click a transaction.
+  </div>
+</main>
+
+<script>
+const API = '/api';
+
+async function loadStatus() {
+  const s = await fetch(API + '/status').then(r => r.json());
+
+  document.getElementById('head').textContent =
+    s.head;
+
+  document.getElementById('participation').textContent =
+    Number(s.delegate_participation).toFixed(2) + '%';
+
+  document.getElementById('peers').textContent =
+    s.connections;
+
+  document.getElementById('supply').textContent =
+    Number(s.supply_pts).toLocaleString(undefined, {
+      minimumFractionDigits: 6,
+      maximumFractionDigits: 6
+    }) + ' PTS';
+
+  document.getElementById('blockTime').textContent =
+    s.block_interval + ' sec';
+
+  document.getElementById('delegates').textContent =
+    s.delegate_count;
+
+  document.getElementById('version').textContent =
+    'PTS v2.0.1';
+
+  document.getElementById('chainId').textContent =
+    s.chain_id;
+
+  document.getElementById('statusLine').innerHTML =
+    '<span class="ok">● LIVE</span> · ' +
+    s.head_timestamp;
+}
+
+async function loadBlocks() {
+  const d = await fetch(API + '/latest').then(r => r.json());
+
+  document.getElementById('blocks').innerHTML =
+    d.blocks.map(b => `
+      <tr>
+        <td>
+          <a href="#" onclick="document.getElementById('blockHeight').value='${b.height}'; lookupBlock(); return false;">
+            ${b.height}
+          </a>
+        </td>
+        <td>${b.timestamp}</td>
+        <td>${b.delegate || '-'}</td>
+        <td>${b.transactions}</td>
+        <td>${b.hash}</td>
+      </tr>
+    `).join('');
+}
+
+async function loadTransactions() {
+  const d = await fetch(API + '/recent-transactions').then(r => r.json());
+
+  document.getElementById('transactions').innerHTML =
+    d.transactions.map(t => `
+      <tr>
+        <td>${t.block}</td>
+        <td>
+          <a href="#" onclick="showTransaction('${t.txid}'); return false;">
+            ${t.txid}
+          </a>
+        </td>
+        <td>${t.from}</td>
+        <td>${t.to}</td>
+        <td>${t.amount}</td>
+        <td>${t.memo}</td>
+      </tr>
+    `).join('');
+}
+
+async function showTransaction(txid) {
+  const [txData, recent] = await Promise.all([
+    fetch(API + '/tx/' + txid).then(r => r.json()),
+    fetch(API + '/recent-transactions').then(r => r.json())
+  ]);
+
+  const meta =
+    recent.transactions.find(t => t.txid === txid) || {};
+
+  const tx = txData.transaction || {};
+  const location = tx.chain_location || {};
+  const trx = tx.trx || {};
+
+  const fee =
+    tx.required_fees && tx.required_fees.amount !== undefined
+      ? (Number(tx.required_fees.amount) / 1000000).toFixed(6) + ' PTS'
+      : '0.000000 PTS';
+
+  const html = `
+    <h2 style="margin-top:0">Transaction Details</h2>
+
+    <div class="tx-grid">
+      <div class="tx-field">
+        <div class="label">Status</div>
+        <div class="data confirmed">● CONFIRMED</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Block</div>
+        <div class="data">#${meta.block || location.block_num || '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Transaction Index</div>
+        <div class="data">${location.trx_num ?? '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Timestamp</div>
+        <div class="data">${meta.timestamp || '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">From</div>
+        <div class="data">${meta.from || '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">To</div>
+        <div class="data">${meta.to || '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Amount</div>
+        <div class="data">${meta.amount || '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Fee</div>
+        <div class="data">${fee}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Memo</div>
+        <div class="data">${meta.memo || '-'}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Expiration</div>
+        <div class="data">${trx.expiration || '-'}</div>
+      </div>
+    </div>
+
+    <div class="tx-field" style="margin-top:16px">
+      <div class="label">Transaction ID</div>
+      <div class="data">${txid}</div>
+    </div>
+
+    <details>
+      <summary>Raw blockchain transaction</summary>
+      <pre>${JSON.stringify(txData, null, 2)}</pre>
+    </details>
+  `;
+
+  document.getElementById('blockResult').innerHTML = html;
+
+  document.getElementById('blockResult').scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+async function lookupBlock() {
+  const h = document.getElementById('blockHeight').value;
+  if (!h) return;
+
+  const r = await fetch(API + '/block/' + h);
+  const d = await r.json();
+
+  if (d.error) {
+    document.getElementById('blockResult').innerHTML =
+      '<h2 style="margin-top:0">Block Details</h2><pre>' +
+      JSON.stringify(d, null, 2) +
+      '</pre>';
+    return;
+  }
+
+  const b = d.block || {};
+  const txs = b.user_transaction_ids || [];
+
+  const txHtml = txs.length
+    ? txs.map(txid =>
+        `<div style="margin-top:6px">
+          <a href="#" onclick="showTransaction('${txid}'); return false;">
+            ${txid}
+          </a>
+        </div>`
+      ).join('')
+    : '<span style="color:#8d9ab7">No transactions</span>';
+
+  document.getElementById('blockResult').innerHTML = `
+    <h2 style="margin-top:0">Block Details</h2>
+
+    <div class="tx-grid">
+      <div class="tx-field">
+        <div class="label">Height</div>
+        <div class="data">#${b.block_num}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Timestamp</div>
+        <div class="data">${b.timestamp}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Transactions</div>
+        <div class="data">${txs.length}</div>
+      </div>
+
+      <div class="tx-field">
+        <div class="label">Block Hash</div>
+        <div class="data">${d.hash}</div>
+      </div>
+    </div>
+
+    <div class="tx-field" style="margin-top:16px">
+      <div class="label">Previous Block</div>
+      <div class="data">${b.previous}</div>
+    </div>
+
+    <div class="tx-field" style="margin-top:16px">
+      <div class="label">Transaction Digest</div>
+      <div class="data">${b.transaction_digest}</div>
+    </div>
+
+    <div class="tx-field" style="margin-top:16px">
+      <div class="label">Transactions</div>
+      <div class="data">${txHtml}</div>
+    </div>
+
+    <details>
+      <summary>Consensus / signature data</summary>
+      <div class="tx-field" style="margin-top:12px">
+        <div class="label">Delegate Signature</div>
+        <div class="data">${b.delegate_signature}</div>
+      </div>
+
+      <div class="tx-field" style="margin-top:12px">
+        <div class="label">Next Secret Hash</div>
+        <div class="data">${b.next_secret_hash}</div>
+      </div>
+
+      <div class="tx-field" style="margin-top:12px">
+        <div class="label">Previous Secret</div>
+        <div class="data">${b.previous_secret}</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Raw block JSON</summary>
+      <pre>${JSON.stringify(d, null, 2)}</pre>
+    </details>
+  `;
+
+  document.getElementById('blockResult').scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+async function refresh() {
+  try {
+    await Promise.all([loadStatus(), loadBlocks(), loadTransactions()]);
+  } catch (e) {
+    document.getElementById('statusLine').textContent =
+      'Explorer API unavailable';
+  }
+}
+
+refresh();
+setInterval(refresh, 10000);
+</script>
+</body>
+</html>

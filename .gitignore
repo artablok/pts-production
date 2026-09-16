@@ -8,3 +8,5 @@ config/*.env
 *.log
 __pycache__/
 *.pyc
+explorer/__pycache__/
+explorer/*.pre-*
